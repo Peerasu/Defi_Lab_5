@@ -72,28 +72,29 @@ contract RPS {
         }
     }
 
+
     function _checkWinnerAndPay() private {
         bytes32 p0Choice = player_reveal[players[0]];
         bytes32 p1Choice = player_reveal[players[1]];
 
-        uint8 p0_final_choice = uint8(uint256(p0Choice) & 0xFF); // 0-2
-        uint8 p1_final_choice = uint8(uint256(p1Choice) & 0xFF); // 0-2
+        uint8 p0_final_choice = uint8(uint256(p0Choice) & 0xFF); // 0-4
+        uint8 p1_final_choice = uint8(uint256(p1Choice) & 0xFF); // 0-4
 
         address payable account0 = payable(players[0]);
         address payable account1 = payable(players[1]);
 
-        if ((p0_final_choice + 1) % 3 == p1_final_choice) {
-            // to pay player[1]
-            account1.transfer(reward);
-        }
-        else if ((p1_final_choice + 1) % 3 == p0_final_choice) {
-            // to pay player[0]
-            account0.transfer(reward);    
-        }
-        else {
-            // to split reward
+        // Both player choose the same choice => tie
+        if (p0_final_choice == p1_final_choice) {
             account0.transfer(reward / 2);
             account1.transfer(reward / 2);
+        } 
+        // Check if p0 beats p1
+        else if (_is_A_Winning(p0_final_choice, p1_final_choice)) {
+            account0.transfer(reward);
+        } 
+        // Otherwise p1 must be the winner
+        else {
+            account1.transfer(reward);
         }
 
         emit playerChoice(players[0], p0Choice, p0_final_choice);
@@ -101,69 +102,37 @@ contract RPS {
 
         _resetGame();
     }
-    event playerChoice(address indexed _player, bytes32 Reveal, uint8 choice_num_);
+    event playerChoice(address player, bytes32 reveal, uint8 finalChoice);
 
 
-//     function _checkWinnerAndPay() private {
-//     bytes32 p0Choice = player_reveal[players[0]];
-//     bytes32 p1Choice = player_reveal[players[1]];
+    function _is_A_Winning(uint8 choiceA, uint8 choiceB) private pure returns (bool) {
+        // List all winning conditions for choiceA vs. choiceB
+        // 0 = Rock, 1 = Paper, 2 = Scissors, 3 = Lizard, 4 = Spock
 
-//     uint8 p0_final_choice = uint8(uint256(p0Choice) & 0xFF); // 0-4
-//     uint8 p1_final_choice = uint8(uint256(p1Choice) & 0xFF); // 0-4
+        // Scissors (2) cuts Paper (1)
+        if (choiceA == 2 && choiceB == 1) return true;
+        // Paper (1) covers Rock (0)
+        if (choiceA == 1 && choiceB == 0) return true;
+        // Rock (0) crushes Lizard (3)
+        if (choiceA == 0 && choiceB == 3) return true;
+        // Lizard (3) poisons Spock (4)
+        if (choiceA == 3 && choiceB == 4) return true;
+        // Spock (4) smashes Scissors (2)
+        if (choiceA == 4 && choiceB == 2) return true;
+        // Scissors (2) decapitates Lizard (3)
+        if (choiceA == 2 && choiceB == 3) return true;
+        // Lizard (3) eats Paper (1)
+        if (choiceA == 3 && choiceB == 1) return true;
+        // Paper (1) disproves Spock (4)
+        if (choiceA == 1 && choiceB == 4) return true;
+        // Spock (4) vaporizes Rock (0)
+        if (choiceA == 4 && choiceB == 0) return true;
+        // Rock (0) crushes Scissors (2)
+        if (choiceA == 0 && choiceB == 2) return true;
 
-//     address payable account0 = payable(players[0]);
-//     address payable account1 = payable(players[1]);
-
-//     // Both player choose the same choice => tie
-//     if (p0_final_choice == p1_final_choice) {
-//         account0.transfer(reward / 2);
-//         account1.transfer(reward / 2);
-//     } 
-//     // Check if p0 beats p1
-//     else if (_is_A_Winning(p0_final_choice, p1_final_choice)) {
-//         account0.transfer(reward);
-//     } 
-//     // Otherwise p1 must be the winner
-//     else {
-//         account1.transfer(reward);
-//     }
-
-//     emit playerChoice(players[0], p0Choice, p0_final_choice);
-//     emit playerChoice(players[1], p1Choice, p1_final_choice);
-
-//     _resetGame();
-// }
-// event playerChoice(address player, bytes32 reveal, uint8 finalChoice);
-
-
-// function _is_A_Winning(uint8 choiceA, uint8 choiceB) private pure returns (bool) {
-//     // List all winning conditions for choiceA vs. choiceB
-//     // 0 = Rock, 1 = Paper, 2 = Scissors, 3 = Lizard, 4 = Spock
-
-//     // Scissors (2) cuts Paper (1)
-//     if (choiceA == 2 && choiceB == 1) return true;
-//     // Paper (1) covers Rock (0)
-//     if (choiceA == 1 && choiceB == 0) return true;
-//     // Rock (0) crushes Lizard (3)
-//     if (choiceA == 0 && choiceB == 3) return true;
-//     // Lizard (3) poisons Spock (4)
-//     if (choiceA == 3 && choiceB == 4) return true;
-//     // Spock (4) smashes Scissors (2)
-//     if (choiceA == 4 && choiceB == 2) return true;
-//     // Scissors (2) decapitates Lizard (3)
-//     if (choiceA == 2 && choiceB == 3) return true;
-//     // Lizard (3) eats Paper (1)
-//     if (choiceA == 3 && choiceB == 1) return true;
-//     // Paper (1) disproves Spock (4)
-//     if (choiceA == 1 && choiceB == 4) return true;
-//     // Spock (4) vaporizes Rock (0)
-//     if (choiceA == 4 && choiceB == 0) return true;
-//     // Rock (0) crushes Scissors (2)
-//     if (choiceA == 0 && choiceB == 2) return true;
-
-//     // If none match, choiceA does not win --> choiceB win
-//     return false;
-// }
+        // If none match, choiceA does not win --> choiceB win
+        return false;
+    }
 
 
     function getTime() public view returns (uint256) {
